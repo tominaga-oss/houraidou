@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>宝来堂 - HORAIDO</title>
+    <style>
+        /* ベーススタイル */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000; /* 全体的な雰囲気に合わせて黒背景 */
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* スマホ画角用のコンテナ（PCで見てもスマホサイズになるように） */
+        .app-container {
+            max-width: 480px; 
+            margin: 0 auto;
+            position: relative;
+            background-color: #111;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* 1枚目（TOP画）のセクション */
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 100vh; /* 画面いっぱいの高さ */
+            background-image: url('画像フォルダ/画像1.png');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 画像を少し暗くして文字を目立たせるオーバーレイ（必要に応じて調整） */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        /* タイトル文字のコンテナ */
+        .title-container {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* 漢字タイトル */
+        .title-kanji {
+            /* ご指定のフォント。端末にない場合を考慮して似た明朝体系をフォールバックに設定 */
+            font-family: "AR Pwanyinzhuai JIS", "AR Pianyinzhuai JIS", "AR Pwanyinzhuai", serif;
+            font-size: 5rem;
+            line-height: 1.1;
+            /* 縦書き設定 */
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 0.2em;
+            text-shadow: 0 2px 15px rgba(0,0,0,0.8);
+        }
+
+        /* 英語タイトル */
+        .title-english {
+            font-family: "Heisei Mincho", "平成明朝", "HeiseiMincho-W3", serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.4em;
+            text-shadow: 0 2px 15px rgba(0,0,0,0.8);
+            margin-left: 0.4em; /* letter-spacingのズレ調整 */
+        }
+
+        /* ハンバーガーメニュー（3本線） */
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            /* コンテナの右端に固定（PC表示時のことも考慮） */
+            right: max(15px, calc(50% - 225px)); 
+            width: 45px;
+            height: 45px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        /* スライドメニュー */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            /* 左側に隠しておく */
+            left: -100%; 
+            width: 75%;
+            max-width: 320px;
+            height: 100vh;
+            background-color: rgba(15, 15, 15, 0.95);
+            z-index: 90;
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            padding-top: 80px;
+            box-sizing: border-box;
+            border-right: 1px solid #333;
+        }
+
+        /* メニューが開いた状態 */
+        .sidebar.open {
+            /* コンテナの左端に合わせる */
+            left: max(0px, calc(50% - 240px)); 
+        }
+
+        /* メニュー項目 */
+        .menu-item {
+            color: #fff;
+            text-decoration: none;
+            padding: 18px 30px;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #333;
+            font-family: "Heisei Mincho", "平成明朝", serif;
+            letter-spacing: 0.1em;
+            transition: background 0.3s, padding-left 0.3s;
+        }
+
+        .menu-item:hover, .menu-item:active {
+            background-color: #222;
+            padding-left: 35px; /* ホバー時に少し右へスライドする演出 */
+        }
+
+        /* メニュー開閉時の背景暗転用オーバーレイ */
+        .menu-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 80;
+            opacity: 0;
+            pointer-events: none; /* 普段はクリック不可 */
+            transition: opacity 0.4s;
+        }
+        
+        .menu-overlay.active {
+            opacity: 1;
+            pointer-events: auto; /* 開いている時はクリック可能 */
+        }
+        /* 2枚目（当選実績）のセクション */
+        .section-2 {
+            position: relative;
+            width: 100%;
+            padding: 60px 0; /* 上下の余白 */
+            background-image: url('画像フォルダ/画像2.png');
+            background-size: cover;
+            background-position: center;
+            overflow: hidden; /* スライダーのはみ出しを隠す */
+        }
+
+        /* スライダーコンテナ */
+        .slider-container {
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* スライダーを動かすトラック */
+        .slider-track {
+            display: flex;
+            width: max-content;
+            /* スライドアニメーション：40秒で1周など、遅めに設定 */
+            animation: scroll-left 40s linear infinite;
+        }
+
+        /* 実績画像 */
+        .slider-item {
+            width: 240px; /* さらに大きく調整（2つ程度並ぶサイズ感） */
+            margin: 0 10px;
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+
+        /* アニメーション定義 */
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); } /* 要素を2倍配置しているので-50%でシームレスにループ */
+        }
+
+        /* 3枚目のセクション */
+        .section-3 {
+            position: relative;
+            width: 100%;
+            /* 背景画像をそのまま表示するため高さの指定は外します */
+        }
+        
+        /* 画像3を背景として全幅表示（横幅が切れない） */
+        .section-3 .bg-img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* --- 4枚目（お便りコーナー）のセクション --- */
+        .letter_section {
+            padding: 40px 15px;
+            background-color: #000;
+            color: #fff;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .ta_c {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .ta_c img {
+            max-width: 80%;
+            height: auto;
+        }
+        
+        .voice_wrap {
+            margin-bottom: 40px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 30px;
+        }
+        
+        .voice_head {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        
+        .voice_head .img img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #d4af37; /* ゴールドの枠線 */
+        }
+        
+        .tbl_voice {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .tbl_voice th, .tbl_voice td {
+            padding: 10px;
+            border: 1px solid #d4af37;
+            font-size: 0.9rem;
+        }
+        
+        /* 相談内容などの見出し（黒に金色の背景） */
+        .tbl_voice th {
+            background-color: #d4af37; /* 金色背景 */
+            color: #000; /* 黒文字 */
+            width: 30%;
+            text-align: left;
+        }
+        
+        /* 内容部分 */
+        .tbl_voice td {
+            background-color: #000; /* 黒背景 */
+            color: #d4af37; /* 金文字 */
+        }
+        
+        /* お礼便りのタイトル */
+        .section-title {
+            text-align: center;
+            font-size: 60px; /* 目立つように大きく */
+            color: #d4af37;
+            margin-bottom: 40px;
+            font-family: "Heisei Mincho", "平成明朝", serif;
+            letter-spacing: 0.1em;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.8); /* 少し影をつけてさらに目立たせる */
+        }
+
+        details.accordion {
+            margin: 0 0 20px 0;
+            background-color: transparent;
+        }
+        
+        details.accordion summary {
+            background-color: #222;
+            padding: 15px;
+            font-weight: bold;
+            border-left: 4px solid #d4af37;
+            margin-bottom: 10px;
+            font-family: "Heisei Mincho", "平成明朝", serif;
+            cursor: pointer;
+            list-style: none; /* デフォルトの矢印を消す */
+            position: relative;
+        }
+
+        /* 開閉の矢印アイコン */
+        details.accordion summary::after {
+            content: "▼";
+            position: absolute;
+            right: 15px;
+            color: #d4af37;
+            transition: transform 0.3s;
+        }
+        details.accordion[open] summary::after {
+            transform: rotate(180deg);
+        }
+        
+        details.accordion summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        /* お客様からのメッセージ背景（口コミ画像だけ枠を取って背景画にする） */
+        .letter_body {
+            background-image: url('画像フォルダ/口コミ画像.png');
+            background-size: 100% 100%; /* 枠の形に合わせて全体を伸ばす */
+            background-position: center;
+            background-repeat: no-repeat;
+            padding: 40px 30px; /* 枠の内側に文字が入るように余白を大きく取る（画像に合わせて要調整） */
+            color: #000; /* 背景が明るい想定で黒文字 */
+            margin-bottom: 15px;
+        }
+
+        /* 手紙風の下線（便箋の罫線）を追加 */
+        .letter_body p {
+            margin: 0;
+            line-height: 2.2em; /* 便箋の線の間隔に合わせる */
+            background-image: linear-gradient(to bottom, transparent 95%, rgba(0,0,0,0.15) 95%);
+            background-size: 100% 2.2em;
+        }
+        
+        /* 宝来堂からの返信 */
+        .reply_body {
+            background-color: #fffaf0; /* ほんのり温かみのある黄色がかった白 */
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #d4af37; /* 金の枠線をつけて黒背景との境界をハッキリさせる */
+            color: #222; /* 黒文字 */
+            line-height: 1.8;
+        }
+        /* 画面幅いっぱいに表示する画像（画像5〜8用） */
+        .fw-img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .image-stack-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- 右端の追従する3本線メニューボタン -->
+    <div class="hamburger" id="hamburger-btn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <!-- 左から出てくるメニュー -->
+    <div class="sidebar" id="sidebar">
+        <a href="#" class="menu-item">TOPに戻る</a>
+        <a href="#" class="menu-item">宝数字を知る</a>
+        <a href="#" class="menu-item">宝来堂とは</a>
+        <a href="#" class="menu-item">お問合せはこちら</a>
+        <a href="#" class="menu-item">開運授与処</a>
+    </div>
+    
+    <!-- メニュー以外の部分を暗くするオーバーレイ -->
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <!-- 1枚目の画像セクション -->
+    <section class="hero">
+        <div class="title-container">
+            <div class="title-kanji">宝来堂</div>
+            <div class="title-english">HORAIDO</div>
+        </div>
+    </section>
+
+    <!-- 2枚目の画像セクション（当選実績） -->
+    <section class="section-2">
+        <div class="slider-container">
+            <!-- シームレスにループさせるために、同じ画像を並べて2セット配置します -->
+            <div class="slider-track">
+                <!-- 1セット目（3枚） -->
+                <img src="画像フォルダ/当選実績スライド.png" alt="当選実績1" class="slider-item">
+                <img src="画像フォルダ/当選実績スライド.png" alt="当選実績2" class="slider-item">
+                <img src="画像フォルダ/当選実績スライド.png" alt="当選実績3" class="slider-item">
+                <!-- 2セット目（ループ用） -->
+                <img src="画像フォルダ/当選実績スライド.png" alt="当選実績1" class="slider-item">
+                <img src="画像フォルダ/当選実績スライド.png" alt="当選実績2" class="slider-item">
+                <img src="画像フォルダ/当選実績スライド.png" alt="当選実績3" class="slider-item">
+            </div>
+        </div>
+    </section>
+
+    <!-- 3枚目の画像セクション -->
+    <section class="section-3">
+        <!-- バナーが組み込まれた修正版の画像を配置 -->
+        <img src="画像フォルダ/画像3（修正）.png" alt="" class="bg-img">
+    </section>
+
+    <!-- お礼便り（口コミ）セクション -->
+    <section class="letter_section" id="letter_section">
+        <h2 class="section-title">お礼便り</h2>
+
+        <!-- 1件目ここから -->
+        <section class="voice_wrap">
+
+            <div class="voice_head">
+                <div class="img">
+                    <img src="画像フォルダ/アイコン.jpg" alt="アイコン">
+                </div>
+                <table class="tbl_voice">
+                    <tr><th>お名前</th><td>名前 太郎</td></tr>
+                    <tr><th>投稿日</th><td>2025/12/31</td></tr>
+                    <tr><th>相談内容</th><td>金運</td></tr>
+                </table>
+            </div>
+
+            <!-- アコーディオン（開閉式） -->
+            <details class="accordion letter back1 font1">
+                <summary>届いたお便り</summary>
+                <div class="letter_body">
+                    <p>
+                        どん底だった時期に宝来堂さんに助けていただき、そこから驚くほど流れが変わりました。<br>
+                        おかげさまで金運にも恵まれ、まさかの当せんまで果たすことができて本当に驚いています。あの時、一歩を踏み出して本当に良かったです。これからも大切な場所として感謝を忘れません。
+                    </p>
+                </div>
+            </details>
+
+            <details class="accordion reply">
+                <summary>宝来堂より</summary>
+                <div class="reply_body">
+                    心温まる素敵な口コミをご投稿いただき、誠にありがとうございます。<br><br>
+                    一歩を踏み出すのには大変な勇気が必要だったことと存じますが、「あの時、一歩を踏み出して本当に良かった」とのお言葉をいただけて、私どもも感無量でございます。<br>
+                    流れが変わり、金運や当せんの素晴らしい御加護に恵まれましたこと、心よりお祝い申し上げます。<br><br>
+                    ○○様（※お客様のお名前）のこれからの日々が、さらに豊かで輝かしいものとなりますよう、引き続き応援しております。こちらこそ、今後ともどうぞよろしくお願いいたします。
+                </div>
+            </details>
+
+        </section>
+        <!-- 1件目ここまで -->
+
+        <!-- 2件目ここから -->
+        <section class="voice_wrap">
+
+            <div class="voice_head">
+                <div class="img">
+                    <img src="画像フォルダ/アイコン.jpg" alt="アイコン">
+                </div>
+                <table class="tbl_voice">
+                    <tr><th>お名前</th><td>名前 太郎</td></tr>
+                    <tr><th>投稿日</th><td>2025/12/31</td></tr>
+                    <tr><th>相談内容</th><td>金運</td></tr>
+                </table>
+            </div>
+
+            <!-- アコーディオン（開閉式） -->
+            <details class="accordion letter back1 font1">
+                <summary>届いたお便り</summary>
+                <div class="letter_body">
+                    <p>
+                        精神的にも金銭的にも厳しい時期があり、藁をもすがる思いでこちらに頼らせていただきました。親身になっていただき、心がすっと軽くなったのを今でも覚えています。<br>
+                        その後、不思議なほど金運が回り始め、なんと宝くじ（※懸賞など）の当せんにも恵まれるという奇跡が起きました。宝来堂さんに出会えていなければ、今の幸せな生活はなかったと思います。心から感謝しています。
+                    </p>
+                </div>
+            </details>
+
+            <details class="accordion reply">
+                <summary>宝来堂より</summary>
+                <div class="reply_body">
+                    嬉しいご報告と、大変励みになるお言葉をありがとうございます！<br><br>
+                    お辛かった時期を乗り越えられ、今こうして「金運や当せんに恵まれた」と笑顔でご報告いただけたことが、何よりも嬉しく、私どもの大きな原動力となります。<br>
+                    ご自身の力を信じて進まれたからこその、素晴らしい引き寄せですね。<br><br>
+                    宝来堂はいつでもここにございますので、またいつでもお気軽にお立ち寄り（※または「ご連絡」）くださいね。○○様の益々のご多幸を心よりお祈り申し上げます。
+                </div>
+            </details>
+
+        </section>
+        <!-- 2件目ここまで -->
+
+    </section><!-- / お礼便りコーナー -->
+
+    <!-- 画像5〜8 セクション -->
+    <section class="image-stack-section">
+        <img src="画像フォルダ/画像5.png" alt="" class="fw-img">
+        <img src="画像フォルダ/画像6.png" alt="" class="fw-img">
+        <img src="画像フォルダ/画像7.png" alt="" class="fw-img">
+        <img src="画像フォルダ/画像８.png" alt="" class="fw-img">
+    </section>
+
+</div>
+
+<script>
+    // メニューの開閉ロジック
+    const hamburger = document.getElementById('hamburger-btn');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('menu-overlay');
+
+    function toggleMenu() {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
+
+    // ボタンクリックで開閉
+    hamburger.addEventListener('click', toggleMenu);
+    // メニュー外の暗い部分をタップしても閉じる
+    overlay.addEventListener('click', toggleMenu);
+</script>
+
+</body>
+</html>
